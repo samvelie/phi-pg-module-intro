@@ -1,23 +1,62 @@
 var express = require('express');
 var router = express.Router();
-var bookList = [
-  { title: 'Rogue Lawyer', author: 'John Grisham'},
-  { title: 'The Girl on the Train', author: 'Paula Hawkins'},
-  { title: 'Scandalous Behavior', author: 'Stuart Woods'},
-  { title: 'Blue', author: 'Danielle Steel'},
-  { title: 'NYPD Red 4', author: 'James Patterson and Marshall Karp'},
-  { title: 'Brotherhood In Death', author: 'J. D. Robb'},
-  { title: 'Morning Star', author: 'Pierce Brown'},
-];
+var pg = require('pg');
+var config = {
+  database: 'phi', // the name of the database
+  host: 'localhost', // where is your database
+  port: 5432, // the port number for your database
+  max: 10, // how many connections at one time
+  idleTimeoutMillis: 30000 // 30 seconds to try to connect
+};
+
+var pool = new pg.Pool(config);
 
 router.get('/', function(req, res){
-  res.send(bookList);
+  // This will be replaced with a SELECT statement to SQL
+  pool.connect(function(errorConnectingToDatabase, client, done){
+    if(errorConnectingToDatabase) {
+      // There was an error connecting to the database
+      console.log('Error connecting to database: ', errorConnectingToDatabase);
+      res.sendStatus(500);
+    } else {
+      // We connected to the database!!!
+      // Now, we're gonna' git stuff!!!!!
+      client.query('SELECT * FROM "books";', function(errorMakingQuery, result){
+        done();
+        if(errorMakingQuery) {
+          console.log('Error making the database query: ', errorMakingQuery);
+          res.sendStatus(500);
+        } else {
+          res.send(result.rows);
+        }
+      });
+    }
+  });
 });
 
 router.post('/new', function(req, res){
+  // This will be replaced with an INSERT statement to SQL
   var newBook = req.body;
-  bookList.push(newBook);
-  res.sendStatus(200);
+
+  pool.connect(function(errorConnectingToDatabase, client, done){
+    if(errorConnectingToDatabase) {
+      // There was an error connecting to the database
+      console.log('Error connecting to database: ', errorConnectingToDatabase);
+      res.sendStatus(500);
+    } else {
+      // We connected to the database!!!
+      // Now, we're gonna' git stuff!!!!!
+      client.query('INSERT INTO books (title, author) VALUES ($1, $2);', [newBook.title, newBook.author], function(errorMakingQuery, result){
+        done();
+        if(errorMakingQuery) {
+          console.log('Error making the database query: ', errorMakingQuery);
+          res.sendStatus(500);
+        } else {
+          res.sendStatus(201);
+        }
+      });
+    }
+  });
 });
 
 module.exports = router;
