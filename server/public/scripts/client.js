@@ -9,9 +9,11 @@ $(document).ready(function(){
       success: function(response) {
         console.log('response', response);
         $('#bookShelf').empty();
-        for (var i = 0; i < response.length; i++) {
-          $('#bookShelf').append('<li>Title: ' + response[i].title + ', Author: ' + response[i].author + '</li>');
+        var htmlBookList = ''; //created this variable per Huck's advice that this is faster than appending every loop
+        for (var i = 0; i < response.length; i++) { //added the concatenated html and variables to append from the response
+          htmlBookList += '<li>Title: ' + response[i].title + ', Author: ' + response[i].author + ', Edition: ' + response[i].edition + ', Publisher: ' + response[i].publisher + '</li>';
         }
+          $('#bookShelf').append(htmlBookList); //only appends once when variable is built
       }
     });
   }
@@ -20,6 +22,10 @@ $(document).ready(function(){
     var newBookObject = {};
     newBookObject.title = $('#newBookTitle').val();
     newBookObject.author = $('#newBookAuthor').val();
+
+    //added these two new properties based on the new inputs
+    newBookObject.edition = $('#newBookEdition').val();
+    newBookObject.publisher = $('#newBookPublisher').val();
     $.ajax({
       type: 'POST',
       url: '/books/new',
