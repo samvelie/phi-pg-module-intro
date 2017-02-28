@@ -1,23 +1,54 @@
 var express = require('express');
 var router = express.Router();
-var bookList = [
-  { title: 'Rogue Lawyer', author: 'John Grisham'},
-  { title: 'The Girl on the Train', author: 'Paula Hawkins'},
-  { title: 'Scandalous Behavior', author: 'Stuart Woods'},
-  { title: 'Blue', author: 'Danielle Steel'},
-  { title: 'NYPD Red 4', author: 'James Patterson and Marshall Karp'},
-  { title: 'Brotherhood In Death', author: 'J. D. Robb'},
-  { title: 'Morning Star', author: 'Pierce Brown'},
-];
+var pg = require('pg');
+var config = {
+  database: 'phi', //env var: PGDATABASE
+  host: 'localhost', // Server hosting the postgres database
+  port: 5432, //env var: PGPORT
+  max: 10, // max number of clients in the pool
+  idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
+};
+var pool = new pg.Pool(config);
 
 router.get('/', function(req, res){
-  res.send(bookList);
+  pool.connect(function(errorConnectingToDatabase, client, done){
+    if(errorConnectingToDatabase) {
+      console.log('error', errorConnectingToDatabase);
+      res.sendStatus(500);
+    } else {
+      client.query('SELECT * FROM books', function(errorRunningDatabseQuery, databaseResult){
+        done();
+        if(errorRunningDatabseQuery) {
+          console.log('error', errorRunningDatabseQuery);
+          res.sendStatus(500);
+        } else {
+          res.send(databaseResult.rows);
+        }
+      });
+    }
+  });
 });
 
 router.post('/new', function(req, res){
   var newBook = req.body;
-  bookList.push(newBook);
-  res.sendStatus(200);
+  pool.connect(function(errorConnectingToDatabase, client, done){
+    if(errorConnectingToDatabase) {
+      console.log('error', errorConnectingToDatabase);
+      res.sendStatus(500);
+    } else {
+      client.query('INSERT INTO books (title, author) VALUES ($1, $2)',
+        [newBook.title, newBook.author],
+        function(errorRunningDatabseQuery, databaseResult){
+        done();
+        if(errorRunningDatabseQuery) {
+          console.log('error', errorRunningDatabseQuery);
+          res.sendStatus(500);
+        } else {
+          res.sendStatus(200);
+        }
+      });
+    }
+  });
 });
 
 module.exports = router;
