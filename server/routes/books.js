@@ -12,7 +12,6 @@ var config = {
 var pool = new pg.Pool(config);
 
 router.get('/', function(req, res){
-  // This will be replaced with a SELECT statement to SQL
   pool.connect(function(errorConnectingToDatabase, client, done){
     if(errorConnectingToDatabase) {
       // There was an error connecting to the database
@@ -36,7 +35,6 @@ router.get('/', function(req, res){
 });
 
 router.post('/new', function(req, res){
-  // This will be replaced with an INSERT statement to SQL
   var newBook = req.body;
 
   pool.connect(function(errorConnectingToDatabase, client, done){
